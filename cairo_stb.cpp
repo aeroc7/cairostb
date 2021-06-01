@@ -60,7 +60,7 @@ CairoStb::create_cairo_compatible_surface(const unsigned char *raw_pixel_data) {
     //  [2] = R
     //  [3] = A
 
-    const auto img_stride = image_dimensions.width * 4;
+    const auto img_stride = image_dimensions.width * image_byte_pixel_amnt;
     auto pixel_data_pos = raw_pixel_data;
 
     // Each byte is either an r, g, b, or a value, making one row of the
