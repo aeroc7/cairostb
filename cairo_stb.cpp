@@ -67,7 +67,7 @@ CairoStb::load_image(const unsigned char *img_data, const size_type buf_size) {
 
     if (!raw_pixel_data) {
         const auto error_msg = "Failed to load image: " + std::string(stbi_failure_reason());
-        throw std::runtime_error(error_msg.c_str());
+        throw std::runtime_error(error_msg);
     }
 
     image_dimensions.width = x;
