@@ -37,8 +37,8 @@ private:
     Dimensions image_dimensions;
     size_type image_size{};
 
-    static constexpr size_type image_byte_pixel_amnt = 4;  // RGBA
-    static constexpr auto cairo_surface_type = CAIRO_FORMAT_ARGB32;
+    static constexpr size_type IMAGE_BYTE_PIXEL_AMNT = 4;  // RGBA
+    static constexpr auto CAIRO_SURFACE_TYPE = CAIRO_FORMAT_ARGB32;
 };
 
 #endif  // CAIRO_STB_H_

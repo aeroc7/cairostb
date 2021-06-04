@@ -15,7 +15,9 @@ CairoStb::CairoStb(CairoStb &&other_img) noexcept
 
 CairoStb::CairoStb(const unsigned char *img_data, const size_type img_size) { load_image(img_data, img_size); }
 
-CairoStb::CairoStb(const std::vector<unsigned char> &img_data) { load_image(img_data.data(), static_cast<int>(img_data.size())); }
+CairoStb::CairoStb(const std::vector<unsigned char> &img_data) {
+    load_image(img_data.data(), static_cast<int>(img_data.size()));
+}
 
 CairoStb &
 CairoStb::operator=(CairoStb &&other_img) noexcept {
@@ -32,7 +34,7 @@ CairoStb::operator=(const CairoStb &other_img) {
     }
 
     auto new_cairo_surface = cairo_image_surface_create(
-        cairo_surface_type, other_img.image_dimensions.width, other_img.image_dimensions.height);
+        CAIRO_SURFACE_TYPE, other_img.image_dimensions.width, other_img.image_dimensions.height);
 
     if (cairo_surface_status(new_cairo_surface) != CAIRO_STATUS_SUCCESS) {
         throw std::runtime_error("Failed to create Cairo image surface");
@@ -71,7 +73,7 @@ CairoStb::load_image(const unsigned char *img_data, const size_type buf_size) {
     image_dimensions.width = x;
     image_dimensions.height = y;
 
-    this->image_size = image_dimensions.width * image_dimensions.height * image_byte_pixel_amnt;
+    this->image_size = image_dimensions.width * image_dimensions.height * IMAGE_BYTE_PIXEL_AMNT;
 
     create_cairo_compatible_surface(raw_pixel_data);
 }
@@ -93,7 +95,7 @@ CairoStb::get_surf() const noexcept {
 
 void
 CairoStb::create_cairo_compatible_surface(const unsigned char *raw_pixel_data) {
-    cairo_surface = cairo_image_surface_create(cairo_surface_type, image_dimensions.width, image_dimensions.height);
+    cairo_surface = cairo_image_surface_create(CAIRO_SURFACE_TYPE, image_dimensions.width, image_dimensions.height);
 
     if (cairo_surface_status(cairo_surface) != CAIRO_STATUS_SUCCESS) {
         throw std::runtime_error("Failed to create Cairo image surface");
@@ -113,7 +115,7 @@ CairoStb::create_cairo_compatible_surface(const unsigned char *raw_pixel_data) {
     //  [2] = R
     //  [3] = A
 
-    const auto img_stride = image_dimensions.width * image_byte_pixel_amnt;
+    const auto img_stride = image_dimensions.width * IMAGE_BYTE_PIXEL_AMNT;
     auto pixel_data_pos = raw_pixel_data;
 
     // Each byte is either an r, g, b, or a value, making one row of the
