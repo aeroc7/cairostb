@@ -5,7 +5,7 @@
 
 #include <utility>
 
-class CairoStb {
+class CairoStb final {
 public:
     using size_type = int;
 
