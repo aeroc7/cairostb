@@ -47,7 +47,7 @@ CairoStb::operator=(const CairoStb &other_img) {
     const auto old_cairo_surface_data = cairo_image_surface_get_data(other_img.cairo_surface);
 
     // Copy old Cairo surface data to new
-    std::memcpy(new_cairo_surface_data, old_cairo_surface_data, static_cast<std::size_t>(other_img.size()));
+    std::memcpy(new_cairo_surface_data, old_cairo_surface_data, static_cast<std::size_t>(other_img.image_size));
 
     // After dropping data in, tell Cairo that it needs to reread the data
     cairo_surface_mark_dirty(new_cairo_surface);
@@ -79,11 +79,6 @@ CairoStb::load_image(const unsigned char *img_data, const size_type buf_size) {
 CairoStb::Dimensions
 CairoStb::dimensions() const noexcept {
     return image_dimensions;
-}
-
-CairoStb::size_type
-CairoStb::size() const noexcept {
-    return image_size;
 }
 
 cairo_surface_t *

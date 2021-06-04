@@ -25,7 +25,6 @@ public:
     operator cairo_surface_t *() const noexcept;
     void load_image(const unsigned char *img_data, const size_type img_size);
     Dimensions dimensions() const noexcept;
-    size_type size() const noexcept;
     cairo_surface_t *get_surf() const noexcept;
     ~CairoStb();
 
