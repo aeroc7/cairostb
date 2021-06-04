@@ -82,6 +82,15 @@ CairoStb::create_cairo_compatible_surface(const unsigned char *raw_pixel_data) {
 
 CairoStb::CairoStb(const CairoStb &other_img) { *this = operator=(other_img); }
 
+CairoStb::CairoStb(CairoStb &&other_img) noexcept
+    : cairo_surface(std::exchange(other_img.cairo_surface, nullptr)),
+      image_dimensions(std::move(other_img.image_dimensions)),
+      image_size(std::move(other_img.image_size)) {}
+
+CairoStb::CairoStb(const unsigned char *img_data, const size_type img_size) { load_image(img_data, img_size); }
+
+CairoStb::operator cairo_surface_t *() const noexcept { return cairo_surface; }
+
 CairoStb &
 CairoStb::operator=(const CairoStb &other_img) {
     if (this == &other_img || !other_img.cairo_surface) {
