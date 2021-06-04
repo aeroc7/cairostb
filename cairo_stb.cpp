@@ -1,14 +1,5 @@
 #include "cairo_stb.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_NO_STDIO  // Disable file i/o
-#define STBI_NO_BMP    // Only jpg/png support needed, so
-#define STBI_NO_PSD    // disable rest to reduce total code compiled
-#define STBI_NO_TGA
-#define STBI_NO_GIF
-#define STBI_NO_PIC
-#define STBI_NO_PNM
-
 #include <stb_image.h>
 
 #include <cstring>
@@ -19,28 +10,24 @@ void
 CairoStb::load_image(const unsigned char *img_data, const size_type buf_size) {
     int x{}, y{}, channels{};
 
-    auto raw_pixel_data = stbi_load_from_memory(
-        img_data, buf_size, &x, &y, &channels, STBI_rgb_alpha);
+    auto raw_pixel_data = stbi_load_from_memory(img_data, buf_size, &x, &y, &channels, STBI_rgb_alpha);
 
     if (!raw_pixel_data) {
-        const auto error_msg =
-            "Failed to load image: " + std::string(stbi_failure_reason());
+        const auto error_msg = "Failed to load image: " + std::string(stbi_failure_reason());
         throw std::runtime_error(error_msg.c_str());
     }
 
     image_dimensions.width = x;
     image_dimensions.height = y;
 
-    this->image_size = image_dimensions.width * image_dimensions.height *
-                       image_byte_pixel_amnt;
+    this->image_size = image_dimensions.width * image_dimensions.height * image_byte_pixel_amnt;
 
     create_cairo_compatible_surface(raw_pixel_data);
 }
 
 void
 CairoStb::create_cairo_compatible_surface(const unsigned char *raw_pixel_data) {
-    cairo_surface = cairo_image_surface_create(
-        cairo_surface_type, image_dimensions.width, image_dimensions.height);
+    cairo_surface = cairo_image_surface_create(cairo_surface_type, image_dimensions.width, image_dimensions.height);
 
     if (cairo_surface_status(cairo_surface) != CAIRO_STATUS_SUCCESS) {
         throw std::runtime_error("Failed to create Cairo image surface");
@@ -69,10 +56,8 @@ CairoStb::create_cairo_compatible_surface(const unsigned char *raw_pixel_data) {
     // We told STBI earlier that we expected the image to be rgba, even if it
     // isn't, so we can always assume there will be bytes for r, g, b, and a
 
-    for (std::size_t height = 0;
-         height < static_cast<std::size_t>(image_dimensions.height); ++height) {
-        for (std::size_t width = 4;
-             width < static_cast<std::size_t>(img_stride); width += 4) {
+    for (std::size_t height = 0; height < static_cast<std::size_t>(image_dimensions.height); ++height) {
+        for (std::size_t width = 4; width < static_cast<std::size_t>(img_stride); width += 4) {
             auto r = pixel_data_pos[width - 4];
             auto g = pixel_data_pos[width - 3];
             auto b = pixel_data_pos[width - 2];
@@ -91,8 +76,7 @@ CairoStb::create_cairo_compatible_surface(const unsigned char *raw_pixel_data) {
 
     cairo_surface_mark_dirty(cairo_surface);
 
-    stbi_image_free(
-        static_cast<void *>(const_cast<unsigned char *>(raw_pixel_data)));
+    stbi_image_free(static_cast<void *>(const_cast<unsigned char *>(raw_pixel_data)));
     raw_pixel_data = nullptr;
 }
 
@@ -104,8 +88,8 @@ CairoStb::operator=(const CairoStb &other_img) {
         return *this;
     }
 
-    auto new_cairo_surface = cairo_image_surface_create(cairo_surface_type,
-        other_img.image_dimensions.width, other_img.image_dimensions.height);
+    auto new_cairo_surface = cairo_image_surface_create(
+        cairo_surface_type, other_img.image_dimensions.width, other_img.image_dimensions.height);
 
     if (cairo_surface_status(new_cairo_surface) != CAIRO_STATUS_SUCCESS) {
         throw std::runtime_error("Failed to create Cairo image surface");
@@ -113,15 +97,12 @@ CairoStb::operator=(const CairoStb &other_img) {
 
     // Don't forget to flush surfaces before accessing raw data
     cairo_surface_flush(new_cairo_surface);
-    auto new_cairo_surface_data =
-        cairo_image_surface_get_data(new_cairo_surface);
+    auto new_cairo_surface_data = cairo_image_surface_get_data(new_cairo_surface);
     cairo_surface_flush(other_img.cairo_surface);
-    const auto old_cairo_surface_data =
-        cairo_image_surface_get_data(other_img.cairo_surface);
+    const auto old_cairo_surface_data = cairo_image_surface_get_data(other_img.cairo_surface);
 
     // Copy old Cairo surface data to new
-    std::memcpy(new_cairo_surface_data, old_cairo_surface_data,
-        static_cast<std::size_t>(other_img.size()));
+    std::memcpy(new_cairo_surface_data, old_cairo_surface_data, static_cast<std::size_t>(other_img.size()));
 
     // After dropping data in, tell Cairo that it needs to reread the data
     cairo_surface_mark_dirty(new_cairo_surface);

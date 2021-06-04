@@ -21,9 +21,7 @@ public:
           image_dimensions(std::move(other_img.image_dimensions)),
           image_size(std::move(other_img.image_size)) {}
 
-    CairoStb(const unsigned char *img_data, const size_type img_size) {
-        load_image(img_data, img_size);
-    }
+    CairoStb(const unsigned char *img_data, const size_type img_size) { load_image(img_data, img_size); }
 
     CairoStb &operator=(CairoStb &&other_img) noexcept;
     CairoStb &operator=(const CairoStb &other_img);
