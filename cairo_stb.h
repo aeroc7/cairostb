@@ -11,8 +11,8 @@ public:
     using size_type = int;
 
     struct Dimensions {
-        int width{};
-        int height{};
+        size_type width{};
+        size_type height{};
     };
 
     CairoStb() = delete;

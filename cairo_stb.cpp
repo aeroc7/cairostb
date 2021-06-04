@@ -16,7 +16,7 @@ CairoStb::CairoStb(CairoStb &&other_img) noexcept
 CairoStb::CairoStb(const unsigned char *img_data, const size_type img_size) { load_image(img_data, img_size); }
 
 CairoStb::CairoStb(const std::vector<unsigned char> &img_data) {
-    load_image(img_data.data(), static_cast<int>(img_data.size()));
+    load_image(img_data.data(), static_cast<size_type>(img_data.size()));
 }
 
 CairoStb &
@@ -117,8 +117,8 @@ CairoStb::create_cairo_compatible_surface(const unsigned char *raw_pixel_data) {
     // We told STBI earlier that we expected the image to be rgba, even if it
     // isn't, so we can always assume there will be bytes for r, g, b, and a
 
-    for (std::size_t height = 0; height < static_cast<std::size_t>(image_dimensions.height); ++height) {
-        for (std::size_t width = 4; width < static_cast<std::size_t>(img_stride); width += 4) {
+    for (size_type height = 0; height < image_dimensions.height; ++height) {
+        for (size_type width = 4; width < img_stride; width += 4) {
             auto r = pixel_data_pos[width - 4];
             auto g = pixel_data_pos[width - 3];
             auto b = pixel_data_pos[width - 2];
