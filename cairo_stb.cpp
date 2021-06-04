@@ -87,7 +87,7 @@ CairoStb::get_surf() const noexcept {
 }
 
 void
-CairoStb::create_cairo_compatible_surface(const unsigned char *raw_pixel_data) {
+CairoStb::create_cairo_compatible_surface(unsigned char *raw_pixel_data) {
     cairo_surface = cairo_image_surface_create(CAIRO_SURFACE_TYPE, image_dimensions.width, image_dimensions.height);
 
     if (cairo_surface_status(cairo_surface) != CAIRO_STATUS_SUCCESS) {
@@ -137,7 +137,7 @@ CairoStb::create_cairo_compatible_surface(const unsigned char *raw_pixel_data) {
 
     cairo_surface_mark_dirty(cairo_surface);
 
-    stbi_image_free(static_cast<void *>(const_cast<unsigned char *>(raw_pixel_data)));
+    stbi_image_free(static_cast<void *>(raw_pixel_data));
     raw_pixel_data = nullptr;
 }
 

@@ -30,7 +30,7 @@ public:
 
 private:
     void free_image_memory() noexcept;
-    void create_cairo_compatible_surface(const unsigned char *raw_pixel_data);
+    void create_cairo_compatible_surface(unsigned char *raw_pixel_data);
 
     cairo_surface_t *cairo_surface{nullptr};
     Dimensions image_dimensions;
