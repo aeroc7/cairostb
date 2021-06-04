@@ -14,7 +14,7 @@ public:
         int height{};
     };
 
-    CairoStb() = default;
+    CairoStb() = delete;
     CairoStb(const CairoStb &other_img);
     CairoStb(CairoStb &&other_img) noexcept;
     CairoStb(const unsigned char *img_data, const size_type img_size);
