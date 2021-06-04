@@ -4,6 +4,7 @@
 #include <cairo/cairo.h>
 
 #include <utility>
+#include <vector>
 
 class CairoStb final {
 public:
@@ -18,6 +19,7 @@ public:
     CairoStb(const CairoStb &other_img);
     CairoStb(CairoStb &&other_img) noexcept;
     CairoStb(const unsigned char *img_data, const size_type img_size);
+    CairoStb(const std::vector<unsigned char> &img_data);
     CairoStb &operator=(CairoStb &&other_img) noexcept;
     CairoStb &operator=(const CairoStb &other_img);
     operator cairo_surface_t *() const noexcept;

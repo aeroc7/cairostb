@@ -15,6 +15,8 @@ CairoStb::CairoStb(CairoStb &&other_img) noexcept
 
 CairoStb::CairoStb(const unsigned char *img_data, const size_type img_size) { load_image(img_data, img_size); }
 
+CairoStb::CairoStb(const std::vector<unsigned char> &img_data) { load_image(img_data.data(), static_cast<int>(img_data.size())); }
+
 CairoStb &
 CairoStb::operator=(CairoStb &&other_img) noexcept {
     std::swap(cairo_surface, other_img.cairo_surface);
