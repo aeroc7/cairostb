@@ -61,17 +61,15 @@ CairoStb::operator cairo_surface_t *() const noexcept { return cairo_surface; }
 
 void
 CairoStb::load_image(const unsigned char *img_data, const size_type buf_size) {
-    int x{}, y{}, channels{};
+    int channels{};
 
-    auto raw_pixel_data = stbi_load_from_memory(img_data, buf_size, &x, &y, &channels, STBI_rgb_alpha);
+    auto raw_pixel_data = stbi_load_from_memory(
+        img_data, buf_size, &image_dimensions.width, &image_dimensions.height, &channels, STBI_rgb_alpha);
 
     if (!raw_pixel_data) {
         const auto error_msg = "Failed to load image: " + std::string(stbi_failure_reason());
         throw std::runtime_error(error_msg);
     }
-
-    image_dimensions.width = x;
-    image_dimensions.height = y;
 
     this->image_size = image_dimensions.width * image_dimensions.height * IMAGE_BYTE_PIXEL_AMNT;
 
