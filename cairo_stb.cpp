@@ -13,9 +13,13 @@ CairoStb::CairoStb(CairoStb &&other_img) noexcept
       image_dimensions(std::move(other_img.image_dimensions)),
       image_size(std::move(other_img.image_size)) {}
 
-CairoStb::CairoStb(const unsigned char *img_data, const size_type img_size) { load_image(img_data, img_size); }
+CairoStb::CairoStb(const std::byte *img_data, const size_type img_size) { load_image(img_data, img_size); }
 
-CairoStb::CairoStb(const std::vector<unsigned char> &img_data) {
+CairoStb::CairoStb(const unsigned char *img_data, const size_type img_size) {
+    load_image(reinterpret_cast<const std::byte *>(img_data), img_size);
+}
+
+CairoStb::CairoStb(const std::vector<std::byte> &img_data) {
     load_image(img_data.data(), static_cast<size_type>(img_data.size()));
 }
 
@@ -60,11 +64,11 @@ CairoStb::operator=(const CairoStb &other_img) {
 CairoStb::operator cairo_surface_t *() const noexcept { return cairo_surface; }
 
 void
-CairoStb::load_image(const unsigned char *img_data, const size_type buf_size) {
+CairoStb::load_image(const std::byte *img_data, const size_type buf_size) {
     int channels{};
 
-    auto raw_pixel_data = stbi_load_from_memory(
-        img_data, buf_size, &image_dimensions.width, &image_dimensions.height, &channels, STBI_rgb_alpha);
+    auto raw_pixel_data = stbi_load_from_memory(reinterpret_cast<const stbi_uc *>(img_data), buf_size,
+        &image_dimensions.width, &image_dimensions.height, &channels, STBI_rgb_alpha);
 
     if (!raw_pixel_data) {
         const auto error_msg = "Failed to load image: " + std::string(stbi_failure_reason());
@@ -73,7 +77,7 @@ CairoStb::load_image(const unsigned char *img_data, const size_type buf_size) {
 
     this->image_size = image_dimensions.width * image_dimensions.height * IMAGE_BYTE_PIXEL_AMNT;
 
-    create_cairo_compatible_surface(raw_pixel_data);
+    create_cairo_compatible_surface(reinterpret_cast<std::byte *>(raw_pixel_data));
 }
 
 CairoStb::Dimensions
@@ -87,7 +91,7 @@ CairoStb::get_surf() const noexcept {
 }
 
 void
-CairoStb::create_cairo_compatible_surface(unsigned char *raw_pixel_data) {
+CairoStb::create_cairo_compatible_surface(std::byte *raw_pixel_data) {
     cairo_surface = cairo_image_surface_create(CAIRO_SURFACE_TYPE, image_dimensions.width, image_dimensions.height);
 
     if (cairo_surface_status(cairo_surface) != CAIRO_STATUS_SUCCESS) {
@@ -125,10 +129,10 @@ CairoStb::create_cairo_compatible_surface(unsigned char *raw_pixel_data) {
             auto a = pixel_data_pos[width - 1];
 
             // Alpha stored in upper 8 bits
-            surface_data[width - 4] = b;
-            surface_data[width - 3] = g;
-            surface_data[width - 2] = r;
-            surface_data[width - 1] = a;
+            surface_data[width - 4] = std::to_integer<unsigned char>(b);
+            surface_data[width - 3] = std::to_integer<unsigned char>(g);
+            surface_data[width - 2] = std::to_integer<unsigned char>(r);
+            surface_data[width - 1] = std::to_integer<unsigned char>(a);
         }
 
         surface_data += img_stride;

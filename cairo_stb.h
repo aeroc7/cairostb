@@ -3,6 +3,7 @@
 
 #include <cairo/cairo.h>
 
+#include <cstddef>
 #include <utility>
 #include <vector>
 
@@ -18,19 +19,20 @@ public:
     CairoStb() = delete;
     CairoStb(const CairoStb &other_img);
     CairoStb(CairoStb &&other_img) noexcept;
+    CairoStb(const std::byte *img_data, const size_type img_size);
     CairoStb(const unsigned char *img_data, const size_type img_size);
-    CairoStb(const std::vector<unsigned char> &img_data);
+    CairoStb(const std::vector<std::byte> &img_data);
     CairoStb &operator=(CairoStb &&other_img) noexcept;
     CairoStb &operator=(const CairoStb &other_img);
     operator cairo_surface_t *() const noexcept;
-    void load_image(const unsigned char *img_data, const size_type img_size);
+    void load_image(const std::byte *img_data, const size_type img_size);
     Dimensions dimensions() const noexcept;
     cairo_surface_t *get_surf() const noexcept;
     ~CairoStb();
 
 private:
     void free_image_memory() noexcept;
-    void create_cairo_compatible_surface(unsigned char *raw_pixel_data);
+    void create_cairo_compatible_surface(std::byte *raw_pixel_data);
 
     cairo_surface_t *cairo_surface{nullptr};
     Dimensions image_dimensions;
