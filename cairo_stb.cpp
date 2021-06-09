@@ -6,6 +6,23 @@
 #include <stdexcept>
 #include <string>
 
+namespace {
+[[nodiscard]] constexpr uint32_t
+rgbau32_to_argbu32(uint32_t pixel) {
+    return (pixel >> 24 | pixel << 8);
+}
+
+[[nodiscard]] constexpr uint32_t
+npmau32_to_pmau32(uint32_t argb) {
+    const auto alpha = ((argb >> 0) & 0xFF);
+
+    uint32_t pma = alpha | static_cast<uint8_t>((((argb >> 8) & 0xFF) * (alpha / 255.0))) << 8 |
+                   static_cast<uint8_t>((((argb >> 16) & 0xFF) * (alpha / 255.0))) << 16 |
+                   static_cast<uint8_t>((((argb >> 24) & 0xFF) * (alpha / 255.0))) << 24;
+    return pma;
+}
+}  // namespace
+
 CairoStb::CairoStb(const CairoStb &other_img) { *this = operator=(other_img); }
 
 CairoStb::CairoStb(CairoStb &&other_img) noexcept
@@ -13,7 +30,9 @@ CairoStb::CairoStb(CairoStb &&other_img) noexcept
       image_dimensions(std::move(other_img.image_dimensions)),
       image_size(std::move(other_img.image_size)) {}
 
-CairoStb::CairoStb(const std::byte *img_data, const size_type img_size) { load_image(img_data, img_size); }
+CairoStb::CairoStb(const std::byte *img_data, const size_type img_size) {
+    load_image(img_data, img_size);
+}
 
 CairoStb::CairoStb(const unsigned char *img_data, const size_type img_size) {
     load_image(reinterpret_cast<const std::byte *>(img_data), img_size);
@@ -51,7 +70,8 @@ CairoStb::operator=(const CairoStb &other_img) {
     const auto old_cairo_surface_data = cairo_image_surface_get_data(other_img.cairo_surface);
 
     // Copy old Cairo surface data to new
-    std::memcpy(new_cairo_surface_data, old_cairo_surface_data, static_cast<std::size_t>(other_img.image_size));
+    std::memcpy(new_cairo_surface_data, old_cairo_surface_data,
+        static_cast<std::size_t>(other_img.image_size));
 
     // After dropping data in, tell Cairo that it needs to reread the data
     cairo_surface_mark_dirty(new_cairo_surface);
@@ -67,8 +87,8 @@ void
 CairoStb::load_image(const std::byte *img_data, const size_type buf_size) {
     int channels{};
 
-    auto raw_pixel_data = stbi_load_from_memory(reinterpret_cast<const stbi_uc *>(img_data), buf_size,
-        &image_dimensions.width, &image_dimensions.height, &channels, STBI_rgb_alpha);
+    auto raw_pixel_data = stbi_load_from_memory(reinterpret_cast<const stbi_uc *>(img_data),
+        buf_size, &image_dimensions.width, &image_dimensions.height, &channels, STBI_rgb_alpha);
 
     if (!raw_pixel_data) {
         const auto error_msg = "Failed to load image: " + std::string(stbi_failure_reason());
@@ -92,7 +112,8 @@ CairoStb::get_surf() const noexcept {
 
 void
 CairoStb::create_cairo_compatible_surface(std::byte *raw_pixel_data) {
-    cairo_surface = cairo_image_surface_create(CAIRO_SURFACE_TYPE, image_dimensions.width, image_dimensions.height);
+    cairo_surface = cairo_image_surface_create(
+        CAIRO_SURFACE_TYPE, image_dimensions.width, image_dimensions.height);
 
     if (cairo_surface_status(cairo_surface) != CAIRO_STATUS_SUCCESS) {
         throw std::runtime_error("Failed to create Cairo image surface");
@@ -100,6 +121,9 @@ CairoStb::create_cairo_compatible_surface(std::byte *raw_pixel_data) {
 
     cairo_surface_flush(cairo_surface);
     auto surface_data = cairo_image_surface_get_data(cairo_surface);
+
+    const auto img_stride = image_dimensions.width * IMAGE_BYTE_PIXEL_AMNT;
+    auto pixel_data_pos = raw_pixel_data;
 
     // STB output data is like:
     //  [0] = R
@@ -111,28 +135,38 @@ CairoStb::create_cairo_compatible_surface(std::byte *raw_pixel_data) {
     //  [1] = G
     //  [2] = R
     //  [3] = A
-
-    const auto img_stride = image_dimensions.width * IMAGE_BYTE_PIXEL_AMNT;
-    auto pixel_data_pos = raw_pixel_data;
-
+    //
     // Each byte is either an r, g, b, or a value, making one row of the
     // image four times its width (a single byte for each value).
     //
     // We told STBI earlier that we expected the image to be rgba, even if it
     // isn't, so we can always assume there will be bytes for r, g, b, and a
+    //
+    // Cairo also uses PMA (premultiplied alpha) over straight
+    // https://en.wikipedia.org/wiki/Alpha_compositing#Straight_versus_premultiplied
+    //
+    // 50% transparent red is 0x80800000, not 0x80ff0000
+    //
+    // Forumla to convert is:
+    // pix = pix * (alpha / 255.0);
+    //
+    // Where pix is either r, g, or b and alpha is the alpha 'a' value
+    // (Should be done for each pixel)
 
     for (size_type height = 0; height < image_dimensions.height; ++height) {
         for (size_type width = 4; width < img_stride; width += 4) {
-            auto r = pixel_data_pos[width - 4];
-            auto g = pixel_data_pos[width - 3];
-            auto b = pixel_data_pos[width - 2];
-            auto a = pixel_data_pos[width - 1];
+            uint32_t rgba_pixel{0};
+            rgba_pixel |= std::to_integer<uint32_t>(pixel_data_pos[width - 4]) << 0;
+            rgba_pixel |= std::to_integer<uint32_t>(pixel_data_pos[width - 3]) << 8;
+            rgba_pixel |= std::to_integer<uint32_t>(pixel_data_pos[width - 2]) << 16;
+            rgba_pixel |= std::to_integer<uint32_t>(pixel_data_pos[width - 1]) << 24;
 
-            // Alpha stored in upper 8 bits
-            surface_data[width - 4] = std::to_integer<unsigned char>(b);
-            surface_data[width - 3] = std::to_integer<unsigned char>(g);
-            surface_data[width - 2] = std::to_integer<unsigned char>(r);
-            surface_data[width - 1] = std::to_integer<unsigned char>(a);
+            const auto argb32_pma_pixel = npmau32_to_pmau32(rgbau32_to_argbu32(rgba_pixel));
+
+            surface_data[width - 4] = argb32_pma_pixel >> 24;  // B
+            surface_data[width - 3] = argb32_pma_pixel >> 16;  // G
+            surface_data[width - 2] = argb32_pma_pixel >> 8;   // R
+            surface_data[width - 1] = argb32_pma_pixel >> 0;   // A
         }
 
         surface_data += img_stride;
