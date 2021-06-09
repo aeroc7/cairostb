@@ -7,11 +7,12 @@
 #include <string>
 
 namespace {
+// RGBA to ARGB
 [[nodiscard]] constexpr uint32_t
 rgbau32_to_argbu32(uint32_t pixel) {
     return (pixel >> 24 | pixel << 8);
 }
-
+// Straight (not premultiplied alpha) to premultiplied alpha
 [[nodiscard]] constexpr uint32_t
 npmau32_to_pmau32(uint32_t argb) {
     const auto alpha = ((argb >> 0) & 0xFF);
